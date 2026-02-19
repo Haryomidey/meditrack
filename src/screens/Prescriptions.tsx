@@ -10,13 +10,13 @@ export const Prescriptions: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [search, setSearch] = useState('');
 
-  const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', refillReminder: true, drugs: [] });
+  const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addPrescription({ ...formData, id: crypto.randomUUID(), timestamp: Date.now(), drugs: [] });
+    await addPrescription({ patientName: formData.patientName, dosageInstructions: formData.dosageInstructions, prescribingDoctor: formData.prescribingDoctor, refillReminder: formData.refillReminder });
     setIsAdding(false);
-    setFormData({ patientName: '', dosageInstructions: '', refillReminder: true, drugs: [] });
+    setFormData({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
   };
 
   const filteredPrescriptions = prescriptions.filter(p => 
@@ -102,6 +102,7 @@ export const Prescriptions: React.FC = () => {
               </div>
               <form onSubmit={handleSave} className="space-y-4">
                 <Input label="Patient Full Name" required value={formData.patientName} onChange={e => setFormData({...formData, patientName: e.target.value})} />
+                <Input label="Prescribing Doctor" required value={formData.prescribingDoctor} onChange={e => setFormData({...formData, prescribingDoctor: e.target.value})} />
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-600 ml-1">Dosage Instructions</label>
                   <textarea 

@@ -23,7 +23,7 @@ export const Inventory: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDrug({ ...formData, id: crypto.randomUUID(), createdAt: Date.now() });
+    await addDrug(formData);
     setIsAdding(false);
     setFormData({ name: '', category: '', batchNumber: '', expiryDate: '', quantity: 0, costPrice: 0, sellingPrice: 0, lowStockThreshold: 5 });
   };

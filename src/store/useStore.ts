@@ -1,6 +1,39 @@
 import { create } from 'zustand';
-import { User, Drug, Sale, Prescription, SyncQueueItem } from '../types';
-import { initDB } from '../db/database';
+import { Drug, Prescription, Sale, User } from '../types';
+import { apiRequest, authStorage, StoredUser } from '../lib/api';
+
+interface AddDrugInput {
+  name: string;
+  category: string;
+  batchNumber: string;
+  expiryDate: string;
+  quantity: number;
+  costPrice: number;
+  sellingPrice: number;
+  lowStockThreshold: number;
+}
+
+interface AddSaleInput {
+  items: Array<{ drugId: string; quantity: number }>;
+  paymentMethod: 'Cash' | 'POS' | 'Transfer';
+}
+
+interface AddPrescriptionInput {
+  patientName: string;
+  dosageInstructions: string;
+  prescribingDoctor: string;
+  refillReminder: boolean;
+}
+
+interface AuthResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+}
 
 interface AppState {
   user: User | null;
@@ -9,28 +42,102 @@ interface AppState {
   sales: Sale[];
   prescriptions: Prescription[];
   isLoading: boolean;
-  
-  // Actions
-  setUser: (user: User | null) => void;
+  error: string | null;
+
   setOnline: (status: boolean) => void;
-  setLoading: (status: boolean) => void;
-  
-  // Inventory
+  clearError: () => void;
+
+  hydrateSession: () => Promise<void>;
+  login: (input: { email: string; password: string }) => Promise<void>;
+  signup: (input: {
+    name: string;
+    email: string;
+    password: string;
+    pharmacyName: string;
+    branchName: string;
+    branchCode: string;
+  }) => Promise<void>;
+  logout: () => Promise<void>;
+
   loadInventory: () => Promise<void>;
-  addDrug: (drug: Drug) => Promise<void>;
-  updateDrug: (drug: Drug) => Promise<void>;
-  
-  // Sales
-  addSale: (sale: Sale) => Promise<void>;
+  addDrug: (drug: AddDrugInput) => Promise<void>;
+  updateDrug: (id: string, drug: Partial<AddDrugInput>) => Promise<void>;
+
+  addSale: (sale: AddSaleInput) => Promise<void>;
   loadSales: () => Promise<void>;
-  
-  // Prescriptions
-  addPrescription: (prescription: Prescription) => Promise<void>;
+
+  addPrescription: (prescription: AddPrescriptionInput) => Promise<void>;
   loadPrescriptions: () => Promise<void>;
-  
-  // Seed
-  seedData: () => Promise<void>;
+
+  loadAllData: () => Promise<void>;
 }
+
+const toUser = (user: StoredUser): User => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  pharmacyName: user.pharmacyName || 'MediTrack',
+});
+
+const persistSession = (payload: AuthResponse, pharmacyName = 'MediTrack') => {
+  authStorage.setSession({
+    accessToken: payload.accessToken,
+    refreshToken: payload.refreshToken,
+    user: {
+      id: payload.user.id,
+      name: payload.user.name,
+      email: payload.user.email,
+      pharmacyName,
+    },
+  });
+
+  return toUser({
+    id: payload.user.id,
+    name: payload.user.name,
+    email: payload.user.email,
+    pharmacyName,
+  });
+};
+
+const mapDrug = (drug: any): Drug => ({
+  id: String(drug._id),
+  name: drug.name,
+  category: drug.category,
+  batchNumber: drug.batchNumber,
+  expiryDate: drug.expiryDate,
+  quantity: Number(drug.quantity),
+  costPrice: Number(drug.costPrice),
+  sellingPrice: Number(drug.sellingPrice),
+  lowStockThreshold: Number(drug.lowStockThreshold ?? 0),
+  createdAt: new Date(drug.createdAt).getTime(),
+});
+
+const mapSale = (sale: any): Sale => ({
+  id: String(sale._id),
+  items: (sale.items || []).map((item: any) => ({
+    drugId: String(item.drugId),
+    name: item.name,
+    quantity: Number(item.quantity),
+    price: Number(item.sellingPrice),
+  })),
+  total: Number(sale.totalRevenue ?? 0),
+  paymentMethod: sale.paymentMethod,
+  timestamp: new Date(sale.timestamp).getTime(),
+  synced: true,
+});
+
+const mapPrescription = (rx: any): Prescription => ({
+  id: String(rx._id),
+  patientName: rx.patientName,
+  dosageInstructions: rx.dosageInstructions,
+  refillReminder: Boolean(rx.refillReminder),
+  timestamp: new Date(rx.timestamp).getTime(),
+  drugs: (rx.drugs || []).map((d: any) => ({
+    drugId: String(d.drugId),
+    name: d.name,
+    quantity: Number(d.quantity),
+  })),
+});
 
 export const useStore = create<AppState>((set, get) => ({
   user: null,
@@ -39,112 +146,151 @@ export const useStore = create<AppState>((set, get) => ({
   sales: [],
   prescriptions: [],
   isLoading: false,
+  error: null,
 
-  setUser: (user) => set({ user }),
   setOnline: (isOnline) => set({ isOnline }),
-  setLoading: (isLoading) => set({ isLoading }),
+  clearError: () => set({ error: null }),
+
+  hydrateSession: async () => {
+    const stored = authStorage.getUser();
+    if (!stored) {
+      set({ user: null });
+      return;
+    }
+
+    set({ user: toUser(stored) });
+
+    try {
+      await get().loadAllData();
+    } catch {
+      authStorage.clear();
+      set({ user: null, inventory: [], sales: [], prescriptions: [] });
+    }
+  },
+
+  signup: async (input) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await apiRequest<AuthResponse>('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+
+      const user = persistSession(response, input.pharmacyName);
+      set({ user });
+      await get().loadAllData();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Signup failed' });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  login: async (input) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await apiRequest<AuthResponse>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+
+      const previousPharmacyName = authStorage.getUser()?.pharmacyName || 'MediTrack';
+      const user = persistSession(response, previousPharmacyName);
+      set({ user });
+      await get().loadAllData();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Login failed' });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  logout: async () => {
+    const refreshToken = authStorage.getRefreshToken();
+
+    try {
+      if (refreshToken) {
+        await apiRequest('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch {
+      // noop
+    } finally {
+      authStorage.clear();
+      set({ user: null, inventory: [], sales: [], prescriptions: [] });
+    }
+  },
 
   loadInventory: async () => {
-    const db = await initDB();
-    const all = await db.getAll('inventory');
-    set({ inventory: all });
+    const response = await apiRequest<{ data: any[] }>('/drugs');
+    set({ inventory: response.data.map(mapDrug) });
   },
 
   addDrug: async (drug) => {
-    const db = await initDB();
-    await db.put('inventory', drug);
-    const all = await db.getAll('inventory');
-    set({ inventory: all });
+    await apiRequest('/drugs', {
+      method: 'POST',
+      body: JSON.stringify(drug),
+    });
+    await get().loadInventory();
   },
 
-  updateDrug: async (drug) => {
-    const db = await initDB();
-    await db.put('inventory', drug);
-    const all = await db.getAll('inventory');
-    set({ inventory: all });
+  updateDrug: async (id, drug) => {
+    await apiRequest(`/drugs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(drug),
+    });
+    await get().loadInventory();
   },
 
   addSale: async (sale) => {
-    const db = await initDB();
-    await db.put('sales', sale);
-    
-    // Deduct inventory
-    for (const item of sale.items) {
-      const drug = await db.get('inventory', item.drugId);
-      if (drug) {
-        drug.quantity -= item.quantity;
-        await db.put('inventory', drug);
-      }
-    }
-
-    const allSales = await db.getAll('sales');
-    const allInv = await db.getAll('inventory');
-    set({ sales: allSales, inventory: allInv });
-
-    if (!get().isOnline) {
-      await db.put('syncQueue', {
-        id: crypto.randomUUID(),
-        type: 'sale',
-        payload: sale,
-        timestamp: Date.now()
-      });
-    }
+    await apiRequest('/sales', {
+      method: 'POST',
+      body: JSON.stringify(sale),
+    });
+    await Promise.all([get().loadSales(), get().loadInventory()]);
   },
 
   loadSales: async () => {
-    const db = await initDB();
-    const all = await db.getAll('sales');
-    set({ sales: all });
+    const response = await apiRequest<{ data: any[] }>('/sales');
+    set({ sales: response.data.map(mapSale) });
   },
 
   addPrescription: async (prescription) => {
-    const db = await initDB();
-    await db.put('prescriptions', prescription);
-    const all = await db.getAll('prescriptions');
-    set({ prescriptions: all });
+    await apiRequest('/prescriptions', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...prescription,
+        drugs: [],
+      }),
+    });
+    await get().loadPrescriptions();
   },
 
   loadPrescriptions: async () => {
-    const db = await initDB();
-    const all = await db.getAll('prescriptions');
-    set({ prescriptions: all });
+    const response = await apiRequest<{ data: any[] }>('/prescriptions');
+    set({ prescriptions: response.data.map(mapPrescription) });
   },
 
-  seedData: async () => {
-    const db = await initDB();
-    const existingInv = await db.getAll('inventory');
-    
-    if (existingInv.length > 0) return;
+  loadAllData: async () => {
+    set({ isLoading: true, error: null });
 
-    // Seed Drugs
-    const dummyDrugs: Drug[] = [
-      { id: 'd1', name: 'Amoxicillin 500mg', category: 'Antibiotics', batchNumber: 'AMX-2024-01', expiryDate: '2025-12-01', quantity: 150, costPrice: 5.50, sellingPrice: 12.00, lowStockThreshold: 20, createdAt: Date.now() },
-      { id: 'd2', name: 'Paracetamol 500mg', category: 'Analgesics', batchNumber: 'PCM-998', expiryDate: '2026-06-15', quantity: 500, costPrice: 1.20, sellingPrice: 3.50, lowStockThreshold: 50, createdAt: Date.now() },
-      { id: 'd3', name: 'Metformin 850mg', category: 'Antidiabetic', batchNumber: 'MET-442', expiryDate: '2024-11-20', quantity: 15, costPrice: 8.00, sellingPrice: 18.50, lowStockThreshold: 20, createdAt: Date.now() },
-      { id: 'd4', name: 'Atorvastatin 20mg', category: 'Statins', batchNumber: 'ATV-001', expiryDate: '2025-01-10', quantity: 80, costPrice: 15.00, sellingPrice: 35.00, lowStockThreshold: 10, createdAt: Date.now() },
-      { id: 'd5', name: 'Cetirizine 10mg', category: 'Antihistamine', batchNumber: 'CET-331', expiryDate: '2026-03-22', quantity: 200, costPrice: 2.50, sellingPrice: 8.00, lowStockThreshold: 25, createdAt: Date.now() },
-    ];
-
-    for (const d of dummyDrugs) await db.put('inventory', d);
-
-    // Seed Prescriptions
-    const dummyPrescriptions: Prescription[] = [
-      { id: 'p1', patientName: 'John Doe', drugs: [{ drugId: 'd1', name: 'Amoxicillin', quantity: 21 }], dosageInstructions: 'Take 1 capsule three times daily for 7 days.', refillReminder: true, timestamp: Date.now() - 86400000 },
-      { id: 'p2', patientName: 'Alice Smith', drugs: [{ drugId: 'd2', name: 'Paracetamol', quantity: 10 }], dosageInstructions: 'Take 2 tablets every 6 hours as needed for pain.', refillReminder: false, timestamp: Date.now() - 172800000 },
-    ];
-
-    for (const pr of dummyPrescriptions) await db.put('prescriptions', pr);
-
-    // Seed Sales
-    const dummySales: Sale[] = [
-      { id: 's1', items: [{ drugId: 'd2', name: 'Paracetamol 500mg', quantity: 2, price: 3.50 }], total: 7.00, paymentMethod: 'Cash', timestamp: Date.now() - 3600000, synced: true },
-      { id: 's2', items: [{ drugId: 'd5', name: 'Cetirizine 10mg', quantity: 1, price: 8.00 }], total: 8.00, paymentMethod: 'POS', timestamp: Date.now() - 7200000, synced: true },
-    ];
-
-    for (const s of dummySales) await db.put('sales', s);
-
-    await get().loadInventory();
-    await get().loadSales();
-    await get().loadPrescriptions();
-  }
+    try {
+      await Promise.all([
+        get().loadInventory(),
+        get().loadSales(),
+        get().loadPrescriptions(),
+      ]);
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to load data' });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));

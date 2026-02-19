@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Card, Button, Input, Badge } from '../components/UI';
+import { Card, Button } from '../components/UI';
 import { useStore } from '../store/useStore';
-import { HiOutlineShoppingCart, HiOutlineMagnifyingGlass, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCircle } from 'react-icons/hi2';
+import { HiOutlineMagnifyingGlass, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCircle } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Sales: React.FC = () => {
@@ -40,7 +40,7 @@ export const Sales: React.FC = () => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    await addSale({ id: crypto.randomUUID(), items: cart, total, paymentMethod, timestamp: Date.now(), synced: false });
+    await addSale({ items: cart.map(item => ({ drugId: item.drugId, quantity: item.quantity })), paymentMethod });
     setShowSuccess(true);
     setCart([]);
     setTimeout(() => setShowSuccess(false), 2000);
@@ -73,7 +73,15 @@ export const Sales: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <button onClick={() => removeFromCart(item.drugId)} className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><HiOutlineMinus size={14} /></button>
                   <span className="font-bold text-sm min-w-[1.5rem] text-center">{item.quantity}</span>
-                  <button onClick={() => addToCart(inventory.find(d => d.id === item.drugId))} className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><HiOutlinePlus size={14} /></button>
+                  <button
+                    onClick={() => {
+                      const drug = inventory.find(d => d.id === item.drugId);
+                      if (drug) addToCart(drug);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"
+                  >
+                    <HiOutlinePlus size={14} />
+                  </button>
                 </div>
                 <div className="ml-4 text-right min-w-[4rem]"><p className="font-black text-gray-900">${(item.price * item.quantity).toFixed(2)}</p></div>
               </Card>

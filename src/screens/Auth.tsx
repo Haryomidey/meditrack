@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, Button, Input } from '../components/UI';
 import { useStore } from '../store/useStore';
@@ -7,15 +6,41 @@ import { HiOutlineArrowRight } from 'react-icons/hi2';
 import { motion } from 'framer-motion';
 
 export const Login: React.FC = () => {
-  const { setUser } = useStore();
+  const { login, signup, isLoading, error, clearError } = useStore();
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
-    pharmacyName: 'Emerald Pharmacy', name: 'Admin User', email: '', password: ''
+    pharmacyName: '',
+    branchName: '',
+    branchCode: '',
+    name: '',
+    email: '',
+    password: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUser({ id: '1', name: formData.name, pharmacyName: formData.pharmacyName, email: formData.email || 'admin@pharmacy.com' });
+    clearError();
+
+    try {
+      if (isRegistering) {
+        await signup({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          pharmacyName: formData.pharmacyName,
+          branchName: formData.branchName,
+          branchCode: formData.branchCode,
+        });
+        return;
+      }
+
+      await login({
+        email: formData.email,
+        password: formData.password,
+      });
+    } catch {
+      // Error state is handled in store.
+    }
   };
 
   return (
@@ -27,21 +52,40 @@ export const Login: React.FC = () => {
           <h1 className="text-4xl font-black text-white tracking-tight mb-2">{isRegistering ? 'Create Account' : 'Welcome Back'}</h1>
           <p className="text-emerald-100 font-medium">MediTrack Community Pharmacy</p>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <Card className="p-6 shadow-2xl">
             {isRegistering && (
               <div className="space-y-4 mb-4">
-                 <Input label="Pharmacy Name" placeholder="Pharmacy Name" value={formData.pharmacyName} onChange={e => setFormData({...formData, pharmacyName: e.target.value})} />
-                 <Input label="Owner Name" placeholder="Owner Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <Input label="Pharmacy Name" placeholder="Pharmacy Name" required value={formData.pharmacyName} onChange={e => setFormData({...formData, pharmacyName: e.target.value})} />
+                <Input label="Branch Name" placeholder="Main Branch" required value={formData.branchName} onChange={e => setFormData({...formData, branchName: e.target.value})} />
+                <Input label="Branch Code" placeholder="MAIN-001" required value={formData.branchCode} onChange={e => setFormData({...formData, branchCode: e.target.value})} />
+                <Input label="Owner Name" placeholder="Owner Name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               </div>
             )}
-            <Input label="Email Address" type="email" placeholder="Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            <Input label="Password" type="password" placeholder="Password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-            <Button type="submit" fullWidth className="mt-6 py-4">{isRegistering ? 'Register Pharmacy' : 'Login to Dashboard'} <HiOutlineArrowRight size={20} /></Button>
+
+            <Input label="Email Address" type="email" placeholder="Email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+            <Input label="Password" type="password" placeholder="Password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+
+            {error && (
+              <p className="mt-2 text-sm font-semibold text-red-500">{error}</p>
+            )}
+
+            <Button disabled={isLoading} type="submit" fullWidth className="mt-6 py-4">
+              {isLoading ? 'Please wait...' : isRegistering ? 'Register Pharmacy' : 'Login to Dashboard'}
+              <HiOutlineArrowRight size={20} />
+            </Button>
           </Card>
         </form>
+
         <div className="mt-8 text-center">
-          <button onClick={() => setIsRegistering(!isRegistering)} className="text-emerald-50 font-bold text-sm">
+          <button
+            onClick={() => {
+              clearError();
+              setIsRegistering(!isRegistering);
+            }}
+            className="text-emerald-50 font-bold text-sm"
+          >
             {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
           </button>
         </div>

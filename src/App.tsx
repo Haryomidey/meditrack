@@ -14,23 +14,24 @@ import { useStore } from './store/useStore';
 
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const { user, setOnline, loadInventory, loadSales, loadPrescriptions, seedData } = useStore();
+  const { user, setOnline, hydrateSession, loadAllData } = useStore();
 
   useEffect(() => {
     // Offline status listener
-    const handleOnline = () => setOnline(true);
+    const handleOnline = async () => {
+      setOnline(true);
+      if (useStore.getState().user) {
+        await loadAllData();
+      }
+    };
     const handleOffline = () => setOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial data load from IndexedDB
+    // Hydrate auth/session and load data from backend
     const bootstrap = async () => {
-      await loadInventory();
-      await loadSales();
-      await loadPrescriptions();
-      // Only seeds if empty
-      await seedData();
+      await hydrateSession();
     };
     bootstrap();
 
@@ -38,7 +39,7 @@ const App: React.FC = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [hydrateSession, loadAllData, setOnline]);
 
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
