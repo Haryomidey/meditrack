@@ -78,6 +78,29 @@ export const apiRequest = async <T>(
   options: RequestInit = {},
   allowRefresh = true,
 ): Promise<T> => {
+  const formatPathLabel = (rawPath?: string): string => {
+    if (!rawPath) return 'Field';
+    const parts = rawPath.split('.').filter(Boolean);
+    const filtered = parts.filter((part) => !['body', 'query', 'params'].includes(part));
+    const key = filtered[filtered.length - 1] || parts[parts.length - 1] || 'field';
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[_-]/g, ' ')
+      .replace(/^./, (char) => char.toUpperCase());
+  };
+
+  const formatIssueMessage = (path: string | undefined, message: string | undefined): string => {
+    const label = formatPathLabel(path);
+    const normalized = message || 'Invalid value';
+    const key = label.toLowerCase();
+
+    if (key === 'password' && normalized.toLowerCase().includes('at least 8')) {
+      return 'Password must contain at least 8 characters';
+    }
+
+    return `${label}: ${normalized}`;
+  };
+
   const headers = new Headers(options.headers || {});
   const token = authStorage.getAccessToken();
 
@@ -107,9 +130,7 @@ export const apiRequest = async <T>(
       const error = await response.json();
       const issues = error?.details?.issues as Array<{ path?: string; message?: string }> | undefined;
       if (issues?.length) {
-        const formatted = issues
-          .map((issue) => `${issue.path || 'request'}: ${issue.message || 'Invalid value'}`)
-          .join(', ');
+        const formatted = issues.map((issue) => formatIssueMessage(issue.path, issue.message)).join(', ');
         message = formatted;
       } else {
         message = error?.message || message;
