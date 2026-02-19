@@ -11,11 +11,22 @@ import { errorHandler } from './middlewares/errorHandler';
 
 export const createApp = () => {
   const app = express();
+  const normalizeOrigin = (origin: string) => origin.replace(/\/$/, '').toLowerCase();
+  const allowedOrigins = env.corsOrigins.map(normalizeOrigin);
 
   app.use(helmet());
   app.use(
     cors({
-      origin: env.corsOrigin,
+      origin: (origin, callback) => {
+        // Allow non-browser clients and same-origin requests with no Origin header.
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        const isAllowed = allowedOrigins.includes(normalizeOrigin(origin));
+        callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
+      },
       credentials: true,
     }),
   );
