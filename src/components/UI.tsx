@@ -47,7 +47,7 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { lab
   <div className="w-full mb-4">
     {label && <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">{label}</label>}
     <input 
-      className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all ${className}`}
+      className={`w-full min-w-0 px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all ${className}`}
       {...props}
     />
   </div>
