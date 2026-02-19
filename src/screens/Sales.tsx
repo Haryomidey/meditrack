@@ -11,6 +11,7 @@ export const Sales: React.FC = () => {
   const [cart, setCart] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'POS' | 'Transfer'>('Cash');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
   const filteredInventory = inventory.filter(d => 
     d.name.toLowerCase().includes(search.toLowerCase()) && d.quantity > 0
@@ -39,11 +40,17 @@ export const Sales: React.FC = () => {
   const total = cart.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
 
   const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    await addSale({ items: cart.map(item => ({ drugId: item.drugId, quantity: item.quantity })), paymentMethod });
-    setShowSuccess(true);
-    setCart([]);
-    setTimeout(() => setShowSuccess(false), 2000);
+    if (cart.length === 0 || isSubmittingSale) return;
+    setIsSubmittingSale(true);
+
+    try {
+      await addSale({ items: cart.map(item => ({ drugId: item.drugId, quantity: item.quantity })), paymentMethod });
+      setShowSuccess(true);
+      setCart([]);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } finally {
+      setIsSubmittingSale(false);
+    }
   };
 
   return (
@@ -101,8 +108,8 @@ export const Sales: React.FC = () => {
       </div>
       {cart.length > 0 && (
         <div className="fixed bottom-28 left-5 right-5 z-40">
-           <Button fullWidth className="py-5 rounded-3xl" onClick={handleCheckout}>
-              <div className="flex items-center justify-between w-full"><span className="font-bold">COMPLETE SALE</span><span className="text-xl font-black">${total.toFixed(2)}</span></div>
+           <Button disabled={isSubmittingSale} fullWidth className="py-5 rounded-3xl" onClick={handleCheckout}>
+              <div className="flex items-center justify-between w-full"><span className="font-bold">{isSubmittingSale ? 'PROCESSING...' : 'COMPLETE SALE'}</span><span className="text-xl font-black">${total.toFixed(2)}</span></div>
            </Button>
         </div>
       )}

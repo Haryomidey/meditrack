@@ -8,15 +8,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const Prescriptions: React.FC = () => {
   const { prescriptions, addPrescription } = useStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [isSubmittingRx, setIsSubmittingRx] = useState(false);
   const [search, setSearch] = useState('');
 
   const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addPrescription({ patientName: formData.patientName, dosageInstructions: formData.dosageInstructions, prescribingDoctor: formData.prescribingDoctor, refillReminder: formData.refillReminder });
-    setIsAdding(false);
-    setFormData({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
+    if (isSubmittingRx) return;
+    setIsSubmittingRx(true);
+
+    try {
+      await addPrescription({ patientName: formData.patientName, dosageInstructions: formData.dosageInstructions, prescribingDoctor: formData.prescribingDoctor, refillReminder: formData.refillReminder });
+      setIsAdding(false);
+      setFormData({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
+    } finally {
+      setIsSubmittingRx(false);
+    }
   };
 
   const filteredPrescriptions = prescriptions.filter(p => 
@@ -124,7 +132,7 @@ export const Prescriptions: React.FC = () => {
                     onChange={e => setFormData({...formData, refillReminder: e.target.checked})} 
                   />
                 </div>
-                <Button type="submit" fullWidth className="mt-4 py-4"><HiOutlineDocumentPlus size={20} /> Create Prescription</Button>
+                <Button disabled={isSubmittingRx} type="submit" fullWidth className="mt-4 py-4"><HiOutlineDocumentPlus size={20} /> {isSubmittingRx ? 'Creating...' : 'Create Prescription'}</Button>
               </form>
             </motion.div>
           </div>
