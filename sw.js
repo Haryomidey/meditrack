@@ -1,10 +1,12 @@
-const CACHE_NAME = 'meditrack-v1';
+const CACHE_NAME = 'meditrack-v2';
 const ASSETS = [
   '/',
   '/index.html',
-  '/index.tsx',
-  '/App.tsx',
-  '/types.ts'
+  '/manifest.webmanifest',
+  '/favicon-32x32.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
