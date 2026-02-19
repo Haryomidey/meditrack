@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Card, Button, Input } from '../components/UI';
 import { useStore } from '../store/useStore';
 import { BiCapsule } from 'react-icons/bi';
-import { HiOutlineArrowRight } from 'react-icons/hi2';
+import { HiOutlineArrowRight, HiOutlineEye, HiOutlineEyeSlash } from 'react-icons/hi2';
 import { motion } from 'framer-motion';
 
 export const Login: React.FC = () => {
   const { login, signup, isLoading, error, clearError } = useStore();
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     pharmacyName: '',
     branchName: '',
@@ -65,7 +66,27 @@ export const Login: React.FC = () => {
             )}
 
             <Input label="Email Address" type="email" placeholder="Email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            <Input label="Password" type="password" placeholder="Password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+            <div className="w-full mb-4">
+              <label className="block text-sm font-medium text-gray-600 mb-1 ml-1">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  required
+                  value={formData.password}
+                  onChange={e => setFormData({...formData, password: e.target.value})}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <HiOutlineEyeSlash size={20} /> : <HiOutlineEye size={20} />}
+                </button>
+              </div>
+            </div>
 
             {error && (
               <p className="mt-2 text-sm font-semibold text-red-500">{error}</p>
