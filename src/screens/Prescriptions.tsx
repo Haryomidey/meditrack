@@ -145,6 +145,7 @@ export const Prescriptions: React.FC = () => {
                 </div>
                 {formData.refillReminder && (
                   <Input
+                    className="text-sm"
                     label="Next Refill Date"
                     type="date"
                     value={formData.nextRefillDate}

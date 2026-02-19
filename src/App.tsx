@@ -8,6 +8,7 @@ import { DrugDetails } from './screens/DrugDetails';
 import { Sales } from './screens/Sales';
 import { Prescriptions } from './screens/Prescriptions';
 import { Reports } from './screens/Reports';
+import { History } from './screens/History';
 import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
 import { useNotifications } from './hooks/useNotifications';
@@ -59,6 +60,7 @@ const App: React.FC = () => {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/inventory/:id" element={<DrugDetails />} />
           <Route path="/sales" element={<Sales />} />
+          <Route path="/history" element={<History />} />
           <Route path="/prescriptions" element={<Prescriptions />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
