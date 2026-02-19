@@ -2,10 +2,19 @@ import { Drug, Prescription } from '../types';
 
 const LOW_STOCK_PREFIX = 'mt_notify_low_stock';
 const REFILL_PREFIX = 'mt_notify_refill';
+const EXPIRING_PREFIX = 'mt_notify_expiring';
+const EXPIRED_PREFIX = 'mt_notify_expired';
+const EXPIRING_SOON_DAYS = 30;
 
 const getTodayKey = (): string => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const getHalfHourSlotKey = (): string => {
+  const now = new Date();
+  const slotMinutes = now.getMinutes() < 30 ? '00' : '30';
+  return `${getTodayKey()}-${String(now.getHours()).padStart(2, '0')}-${slotMinutes}`;
 };
 
 const hasNotified = (key: string): boolean => {
@@ -50,13 +59,13 @@ export const requestNotificationPermission = async (): Promise<void> => {
 };
 
 export const processInventoryNotifications = async (inventory: Drug[]): Promise<void> => {
-  const today = getTodayKey();
+  const slot = getHalfHourSlotKey();
 
   for (const drug of inventory) {
     const isLow = drug.quantity <= drug.lowStockThreshold;
     if (!isLow) continue;
 
-    const key = `${LOW_STOCK_PREFIX}:${drug.id}:${today}`;
+    const key = `${LOW_STOCK_PREFIX}:${drug.id}:${slot}`;
     if (hasNotified(key)) continue;
 
     await sendNotification(
@@ -69,7 +78,7 @@ export const processInventoryNotifications = async (inventory: Drug[]): Promise<
 };
 
 export const processRefillNotifications = async (prescriptions: Prescription[]): Promise<void> => {
-  const today = getTodayKey();
+  const slot = getHalfHourSlotKey();
   const now = new Date();
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
@@ -81,7 +90,7 @@ export const processRefillNotifications = async (prescriptions: Prescription[]):
     if (Number.isNaN(refillAt.getTime())) continue;
     if (refillAt.getTime() > endOfToday.getTime()) continue;
 
-    const key = `${REFILL_PREFIX}:${prescription.id}:${today}`;
+    const key = `${REFILL_PREFIX}:${prescription.id}:${slot}`;
     if (hasNotified(key)) continue;
 
     await sendNotification(
@@ -90,5 +99,42 @@ export const processRefillNotifications = async (prescriptions: Prescription[]):
     );
 
     setNotified(key);
+  }
+};
+
+export const processExpiryNotifications = async (inventory: Drug[]): Promise<void> => {
+  const slot = getHalfHourSlotKey();
+  const today = getTodayKey();
+  const now = new Date();
+  const endOfSoonWindow = new Date(now.getTime() + EXPIRING_SOON_DAYS * 24 * 60 * 60 * 1000);
+
+  for (const drug of inventory) {
+    const expiryAt = new Date(drug.expiryDate);
+    if (Number.isNaN(expiryAt.getTime())) continue;
+
+    if (expiryAt.getTime() < now.getTime()) {
+      const dailyExpiredKey = `${EXPIRED_PREFIX}:${drug.id}:${today}`;
+      if (hasNotified(dailyExpiredKey)) continue;
+
+      await sendNotification(
+        'Expired Product Alert',
+        `${drug.name} has expired. Remove it from active stock.`,
+      );
+
+      setNotified(dailyExpiredKey);
+      continue;
+    }
+
+    if (expiryAt.getTime() <= endOfSoonWindow.getTime()) {
+      const expiringKey = `${EXPIRING_PREFIX}:${drug.id}:${slot}`;
+      if (hasNotified(expiringKey)) continue;
+
+      await sendNotification(
+        'Expiry Warning',
+        `${drug.name} is expiring soon (${expiryAt.toLocaleDateString()}).`,
+      );
+
+      setNotified(expiringKey);
+    }
   }
 };
