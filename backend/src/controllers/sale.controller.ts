@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as saleService from '../services/sale.service';
 import { createAuditLog } from '../services/audit.service';
+import { broadcastPharmacyUpdate } from '../realtime/ws';
 
 const scope = (req: Request) => ({
   pharmacyId: req.user!.pharmacyId,
@@ -29,6 +30,9 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
     userAgent: req.headers['user-agent'],
   });
 
+  broadcastPharmacyUpdate(req.user!.pharmacyId, { resource: 'sales', action: 'created' });
+  broadcastPharmacyUpdate(req.user!.pharmacyId, { resource: 'drugs', action: 'updated' });
+
   res.status(StatusCodes.CREATED).json({ data: sale });
 });
 
@@ -45,6 +49,8 @@ export const patchSale = asyncHandler(async (req: Request, res: Response) => {
     ipAddress: req.ip,
     userAgent: req.headers['user-agent'],
   });
+
+  broadcastPharmacyUpdate(req.user!.pharmacyId, { resource: 'sales', action: 'updated' });
 
   res.status(StatusCodes.OK).json({ data: sale });
 });

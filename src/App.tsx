@@ -14,12 +14,14 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { useStore } from './store/useStore';
 import { useNotifications } from './hooks/useNotifications';
+import { useRealtimeSync } from './hooks/useRealtimeSync';
 
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
   const { user, setOnline, hydrateSession, loadAllData, inventory, prescriptions } = useStore();
 
   useNotifications(Boolean(user), inventory, prescriptions);
+  useRealtimeSync(Boolean(user));
 
   useEffect(() => {
     // Offline status listener
