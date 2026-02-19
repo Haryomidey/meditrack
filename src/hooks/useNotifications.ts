@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Drug, Prescription } from '../types';
 import {
+  processExpiryNotifications,
   processInventoryNotifications,
   processRefillNotifications,
   requestNotificationPermission,
@@ -18,11 +19,17 @@ export const useNotifications = (
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    void processInventoryNotifications(inventory);
-  }, [inventory, isAuthenticated]);
+    const runChecks = async () => {
+      await processInventoryNotifications(inventory);
+      await processExpiryNotifications(inventory);
+      await processRefillNotifications(prescriptions);
+    };
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    void processRefillNotifications(prescriptions);
-  }, [prescriptions, isAuthenticated]);
+    void runChecks();
+    const timer = window.setInterval(() => {
+      void runChecks();
+    }, 30 * 60 * 1000);
+
+    return () => window.clearInterval(timer);
+  }, [inventory, prescriptions, isAuthenticated]);
 };
