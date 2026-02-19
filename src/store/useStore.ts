@@ -133,6 +133,7 @@ const mapPrescription = (rx: any): Prescription => ({
   dosageInstructions: rx.dosageInstructions,
   refillReminder: Boolean(rx.refillReminder),
   timestamp: new Date(rx.timestamp).getTime(),
+  nextRefillDate: rx.nextRefillDate || undefined,
   drugs: (rx.drugs || []).map((d: any) => ({
     drugId: String(d.drugId),
     name: d.name,

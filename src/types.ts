@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -41,6 +40,7 @@ export interface Prescription {
   drugs: PrescriptionDrug[];
   dosageInstructions: string;
   refillReminder: boolean;
+  nextRefillDate?: string;
   timestamp: number;
 }
 
