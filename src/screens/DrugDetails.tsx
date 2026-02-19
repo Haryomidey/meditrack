@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
@@ -71,9 +70,9 @@ export const DrugDetails: React.FC = () => {
           <Card className="bg-emerald-600 text-white border-none relative overflow-hidden p-6">
             <div className="relative z-10 flex justify-between items-end">
               <div>
-                <p className="text-emerald-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Stock</p>
-                <h2 className="text-5xl font-black">{drug.quantity}</h2>
-                <p className="text-emerald-100 text-xs mt-2 font-bold uppercase">Pieces in unit</p>
+                <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Stock</p>
+                <h2 className="text-5xl text-black">{drug.quantity}</h2>
+                <p className="text-emerald-400 text-xs mt-2 font-bold uppercase">Pieces in unit</p>
               </div>
               <div className="flex flex-col items-end gap-2">
                 {isLowStock && <Badge variant="danger" className="bg-red-500 text-white border-none">Low Stock</Badge>}
