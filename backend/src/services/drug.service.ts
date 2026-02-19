@@ -1,4 +1,4 @@
-import mongoose, { FilterQuery, Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../utils/AppError';
 import { DrugModel } from '../models/drug.model';
@@ -23,7 +23,7 @@ interface CreateDrugInput {
 
 interface UpdateDrugInput extends Partial<CreateDrugInput> {}
 
-const scopeFilter = (scope: DrugScope): FilterQuery<typeof DrugModel> => {
+const scopeFilter = (scope: DrugScope) => {
   return {
     pharmacyId: new Types.ObjectId(scope.pharmacyId),
     ...(scope.branchId ? { branchId: new Types.ObjectId(scope.branchId) } : {}),
