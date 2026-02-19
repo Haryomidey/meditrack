@@ -12,6 +12,7 @@ import {
   HiOutlineCube
 } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
+import { formatNaira } from '../lib/currency';
 
 export const Dashboard: React.FC = () => {
   const { inventory, sales } = useStore();
@@ -34,10 +35,11 @@ export const Dashboard: React.FC = () => {
         <Card className="bg-emerald-600 border-none text-white relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-1">Revenue Today</p>
-            <h2 className="text-3xl font-black">${totalRevenue.toFixed(2)}</h2>
+            <h2 className="text-3xl font-black">{formatNaira(totalRevenue)}</h2>
             <div className="mt-4 flex gap-2">
-               <Badge variant="success" className="bg-white/20 text-white border-none">+{todaysSales.length} Transactions</Badge>
+               <Badge variant="success" className="bg-white/20 text-white border-none">{formatNaira(totalRevenue)} Generated</Badge>
             </div>
+            <p className="mt-2 text-xs font-semibold text-emerald-100">{todaysSales.length} transactions today</p>
           </div>
           <HiOutlineArrowTrendingUp className="absolute -right-6 -bottom-6 w-32 h-32 text-emerald-500/30 rotate-12" />
         </Card>
@@ -62,7 +64,7 @@ export const Dashboard: React.FC = () => {
           {[
             { label: 'Add Stock', icon: HiOutlinePlusCircle, to: '/inventory', color: 'emerald' },
             { label: 'New Sale', icon: HiOutlineShoppingBag, to: '/sales', color: 'blue' },
-            { label: 'History', icon: HiOutlineClock, to: '/sales', color: 'purple' },
+            { label: 'History', icon: HiOutlineClock, to: '/history', color: 'purple' },
           ].map((action) => (
             <button 
               key={action.label}
