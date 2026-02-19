@@ -105,7 +105,15 @@ export const apiRequest = async <T>(
     let message = 'Request failed';
     try {
       const error = await response.json();
-      message = error?.message || message;
+      const issues = error?.details?.issues as Array<{ path?: string; message?: string }> | undefined;
+      if (issues?.length) {
+        const formatted = issues
+          .map((issue) => `${issue.path || 'request'}: ${issue.message || 'Invalid value'}`)
+          .join(', ');
+        message = formatted;
+      } else {
+        message = error?.message || message;
+      }
     } catch {
       // noop
     }

@@ -12,7 +12,21 @@ export const validate = (schema: ZodTypeAny) => {
     });
 
     if (!parsed.success) {
-      next(new AppError('Validation failed', StatusCodes.BAD_REQUEST, parsed.error.flatten()));
+      const issues = parsed.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      }));
+
+      const primary = issues[0];
+      const message = primary
+        ? `Validation failed: ${primary.path || 'request'} - ${primary.message}`
+        : 'Validation failed';
+
+      next(
+        new AppError(message, StatusCodes.BAD_REQUEST, {
+          issues,
+        }),
+      );
       return;
     }
 
