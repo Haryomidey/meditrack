@@ -10,6 +10,7 @@ import { Prescriptions } from './screens/Prescriptions';
 import { Reports } from './screens/Reports';
 import { History } from './screens/History';
 import { Layout } from './components/Layout';
+import { ScrollToTop } from './components/ScrollToTop';
 import { useStore } from './store/useStore';
 import { useNotifications } from './hooks/useNotifications';
 
@@ -54,6 +55,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <ScrollToTop />
       <Layout>
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
