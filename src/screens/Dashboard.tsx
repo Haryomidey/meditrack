@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Card, Badge, Button } from '../components/UI';
+import { Card, Badge } from '../components/UI';
 import { useStore } from '../store/useStore';
 import { 
   HiOutlineArrowTrendingUp, 
@@ -34,7 +33,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-4">
         <Card className="bg-emerald-600 border-none text-white relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-emerald-100 text-sm font-bold uppercase tracking-wider mb-1">Revenue Today</p>
+            <p className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-1">Revenue Today</p>
             <h2 className="text-3xl font-black">${totalRevenue.toFixed(2)}</h2>
             <div className="mt-4 flex gap-2">
                <Badge variant="success" className="bg-white/20 text-white border-none">+{todaysSales.length} Transactions</Badge>
