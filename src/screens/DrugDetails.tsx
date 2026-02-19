@@ -15,6 +15,7 @@ import {
   HiOutlineXMark,
   HiOutlinePlus,
 } from 'react-icons/hi2';
+import { formatNaira } from '../lib/currency';
 
 export const DrugDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -176,7 +177,7 @@ export const DrugDetails: React.FC = () => {
               </div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selling Price</p>
             </div>
-            <h3 className="text-xl font-black text-gray-900 mt-1">${drug.sellingPrice.toFixed(2)}</h3>
+            <h3 className="text-xl font-black text-gray-900 mt-1">{formatNaira(drug.sellingPrice)}</h3>
           </Card>
           <Card className="p-4 flex flex-col justify-between">
             <div>
@@ -204,7 +205,7 @@ export const DrugDetails: React.FC = () => {
             </div>
             <div className="flex justify-between items-center p-4">
               <span className="text-sm font-bold text-gray-500">Cost Price</span>
-              <span className="text-sm font-black text-gray-900">${drug.costPrice.toFixed(2)}</span>
+              <span className="text-sm font-black text-gray-900">{formatNaira(drug.costPrice)}</span>
             </div>
             <div className="flex justify-between items-center p-4">
               <span className="text-sm font-bold text-gray-500">Stock Threshold</span>
@@ -254,14 +255,14 @@ export const DrugDetails: React.FC = () => {
                   <Input label="Category" required value={editData.category} onChange={e => setEditData({ ...editData, category: e.target.value })} />
                   <Input label="Batch #" required value={editData.batchNumber} onChange={e => setEditData({ ...editData, batchNumber: e.target.value })} />
                 </div>
-                <Input label="Expiry Date" type="date" required value={editData.expiryDate} onChange={e => setEditData({ ...editData, expiryDate: e.target.value })} />
+                <Input className="text-sm" label="Expiry Date" type="date" required value={editData.expiryDate} onChange={e => setEditData({ ...editData, expiryDate: e.target.value })} />
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Stock Qty" type="number" required value={editData.quantity} onChange={e => setEditData({ ...editData, quantity: parseInt(e.target.value, 10) || 0 })} />
                   <Input label="Low Alert" type="number" required value={editData.lowStockThreshold} onChange={e => setEditData({ ...editData, lowStockThreshold: parseInt(e.target.value, 10) || 0 })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Cost ($)" type="number" step="0.01" required value={editData.costPrice} onChange={e => setEditData({ ...editData, costPrice: parseFloat(e.target.value) || 0 })} />
-                  <Input label="Selling ($)" type="number" step="0.01" required value={editData.sellingPrice} onChange={e => setEditData({ ...editData, sellingPrice: parseFloat(e.target.value) || 0 })} />
+                  <Input label="Cost (NGN)" type="number" step="0.01" required value={editData.costPrice} onChange={e => setEditData({ ...editData, costPrice: parseFloat(e.target.value) || 0 })} />
+                  <Input label="Selling (NGN)" type="number" step="0.01" required value={editData.sellingPrice} onChange={e => setEditData({ ...editData, sellingPrice: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <Button disabled={isSavingEdit} type="submit" fullWidth className="mt-4">{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
               </form>
