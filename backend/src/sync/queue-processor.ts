@@ -132,7 +132,14 @@ export const processSyncQueue = async (scope: SyncScope, queue: SyncQueueItem[])
         }
 
         const drug = await updateDrug(scope, payload.drugId, {
-          ...payload,
+          name: payload.name,
+          category: payload.category,
+          batchNumber: payload.batchNumber,
+          expiryDate: payload.expiryDate,
+          costPrice: payload.costPrice,
+          sellingPrice: payload.sellingPrice,
+          supplierName: payload.supplierName,
+          lowStockThreshold: payload.lowStockThreshold,
           quantity: nextQuantity,
         });
 
