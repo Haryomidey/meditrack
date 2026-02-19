@@ -11,7 +11,7 @@ export const Prescriptions: React.FC = () => {
   const [isSubmittingRx, setIsSubmittingRx] = useState(false);
   const [search, setSearch] = useState('');
 
-  const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
+  const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, nextRefillDate: '', drugs: [] });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +19,15 @@ export const Prescriptions: React.FC = () => {
     setIsSubmittingRx(true);
 
     try {
-      await addPrescription({ patientName: formData.patientName, dosageInstructions: formData.dosageInstructions, prescribingDoctor: formData.prescribingDoctor, refillReminder: formData.refillReminder });
+      await addPrescription({
+        patientName: formData.patientName,
+        dosageInstructions: formData.dosageInstructions,
+        prescribingDoctor: formData.prescribingDoctor,
+        refillReminder: formData.refillReminder,
+        nextRefillDate: formData.nextRefillDate || undefined,
+      });
       setIsAdding(false);
-      setFormData({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, drugs: [] });
+      setFormData({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, nextRefillDate: '', drugs: [] });
     } finally {
       setIsSubmittingRx(false);
     }
@@ -58,6 +64,11 @@ export const Prescriptions: React.FC = () => {
                 <div><h3 className="font-bold text-gray-900 leading-tight">{rx.patientName}</h3><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(rx.timestamp).toLocaleDateString()} • REF: {rx.id.slice(0, 6)}</p></div>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 mb-4"><p className="text-xs font-semibold text-gray-700 italic">"{rx.dosageInstructions}"</p></div>
+              {rx.nextRefillDate && (
+                <p className="text-[11px] font-bold text-emerald-700 mb-3">
+                  Next refill: {new Date(rx.nextRefillDate).toLocaleDateString()}
+                </p>
+              )}
               <div className="flex items-center justify-between">
                 <div className="flex -space-x-2">
                   {[1, 2, 3].map(i => (
@@ -132,6 +143,14 @@ export const Prescriptions: React.FC = () => {
                     onChange={e => setFormData({...formData, refillReminder: e.target.checked})} 
                   />
                 </div>
+                {formData.refillReminder && (
+                  <Input
+                    label="Next Refill Date"
+                    type="date"
+                    value={formData.nextRefillDate}
+                    onChange={e => setFormData({ ...formData, nextRefillDate: e.target.value })}
+                  />
+                )}
                 <Button disabled={isSubmittingRx} type="submit" fullWidth className="mt-4 py-4"><HiOutlineDocumentPlus size={20} /> {isSubmittingRx ? 'Creating...' : 'Create Prescription'}</Button>
               </form>
             </motion.div>

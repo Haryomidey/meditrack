@@ -10,10 +10,13 @@ import { Prescriptions } from './screens/Prescriptions';
 import { Reports } from './screens/Reports';
 import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
+import { useNotifications } from './hooks/useNotifications';
 
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const { user, setOnline, hydrateSession, loadAllData } = useStore();
+  const { user, setOnline, hydrateSession, loadAllData, inventory, prescriptions } = useStore();
+
+  useNotifications(Boolean(user), inventory, prescriptions);
 
   useEffect(() => {
     // Offline status listener

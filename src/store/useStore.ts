@@ -23,6 +23,7 @@ interface AddPrescriptionInput {
   dosageInstructions: string;
   prescribingDoctor: string;
   refillReminder: boolean;
+  nextRefillDate?: string;
 }
 
 interface AuthResponse {
