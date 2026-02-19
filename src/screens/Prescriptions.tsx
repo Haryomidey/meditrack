@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { Card, Button, Input, Badge } from '../components/UI';
 import { useStore } from '../store/useStore';
-import { HiOutlineDocumentPlus, HiOutlineMagnifyingGlass, HiOutlineUser, HiOutlineClipboard, HiOutlinePlus, HiOutlineXMark, HiOutlineUserMinus } from 'react-icons/hi2';
+import { HiOutlineDocumentPlus, HiOutlineMagnifyingGlass, HiOutlineUser, HiOutlineClipboard, HiOutlinePlus, HiOutlineXMark, HiOutlineUserMinus, HiOutlineTrash } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Prescriptions: React.FC = () => {
-  const { prescriptions, addPrescription } = useStore();
+  const { prescriptions, addPrescription, deletePrescription } = useStore();
   const [isAdding, setIsAdding] = useState(false);
   const [isSubmittingRx, setIsSubmittingRx] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   const [formData, setFormData] = useState({ patientName: '', dosageInstructions: '', prescribingDoctor: '', refillReminder: true, nextRefillDate: '', drugs: [] });
@@ -36,6 +37,19 @@ export const Prescriptions: React.FC = () => {
   const filteredPrescriptions = prescriptions.filter(p => 
     p.patientName.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleDelete = async (id: string, patientName: string) => {
+    if (deletingId) return;
+    const confirmed = window.confirm(`Delete prescription for ${patientName}?`);
+    if (!confirmed) return;
+
+    setDeletingId(id);
+    try {
+      await deletePrescription(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -77,7 +91,17 @@ export const Prescriptions: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <Badge variant={rx.refillReminder ? 'info' : 'success'}>{rx.refillReminder ? 'Refill Active' : 'Completed'}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={rx.refillReminder ? 'info' : 'success'}>{rx.refillReminder ? 'Refill Active' : 'Completed'}</Badge>
+                  <button
+                    onClick={() => handleDelete(rx.id, rx.patientName)}
+                    disabled={deletingId === rx.id}
+                    className="w-8 h-8 rounded-lg bg-red-50 border border-red-100 text-red-600 flex items-center justify-center disabled:opacity-50"
+                    aria-label={`Delete prescription for ${rx.patientName}`}
+                  >
+                    <HiOutlineTrash size={15} />
+                  </button>
+                </div>
               </div>
             </Card>
           ))

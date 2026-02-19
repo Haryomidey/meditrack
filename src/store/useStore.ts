@@ -69,6 +69,7 @@ interface AppState {
   loadSales: () => Promise<void>;
 
   addPrescription: (prescription: AddPrescriptionInput) => Promise<void>;
+  deletePrescription: (id: string) => Promise<void>;
   loadPrescriptions: () => Promise<void>;
 
   loadAllData: () => Promise<void>;
@@ -278,6 +279,13 @@ export const useStore = create<AppState>((set, get) => ({
         ...prescription,
         drugs: [],
       }),
+    });
+    await get().loadPrescriptions();
+  },
+
+  deletePrescription: async (id) => {
+    await apiRequest(`/prescriptions/${id}`, {
+      method: 'DELETE',
     });
     await get().loadPrescriptions();
   },

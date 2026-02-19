@@ -11,6 +11,7 @@ import { Reports } from './screens/Reports';
 import { History } from './screens/History';
 import { Layout } from './components/Layout';
 import { ScrollToTop } from './components/ScrollToTop';
+import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { useStore } from './store/useStore';
 import { useNotifications } from './hooks/useNotifications';
 
@@ -56,6 +57,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <ScrollToTop />
+      <PwaInstallPrompt />
       <Layout>
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
