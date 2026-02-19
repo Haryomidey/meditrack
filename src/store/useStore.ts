@@ -62,6 +62,7 @@ interface AppState {
   loadInventory: () => Promise<void>;
   addDrug: (drug: AddDrugInput) => Promise<void>;
   updateDrug: (id: string, drug: Partial<AddDrugInput>) => Promise<void>;
+  deleteDrug: (id: string) => Promise<void>;
 
   addSale: (sale: AddSaleInput) => Promise<void>;
   loadSales: () => Promise<void>;
@@ -244,6 +245,13 @@ export const useStore = create<AppState>((set, get) => ({
     await apiRequest(`/drugs/${id}`, {
       method: 'PUT',
       body: JSON.stringify(drug),
+    });
+    await get().loadInventory();
+  },
+
+  deleteDrug: async (id) => {
+    await apiRequest(`/drugs/${id}`, {
+      method: 'DELETE',
     });
     await get().loadInventory();
   },

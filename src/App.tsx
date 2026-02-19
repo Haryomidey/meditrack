@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { SplashScreen } from './screens/SplashScreen';
 import { Login } from './screens/Auth';
 import { Dashboard } from './screens/Dashboard';
