@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore';
 import { HiOutlineMagnifyingGlass, HiOutlinePlus, HiOutlineFunnel, HiOutlineXMark, HiOutlineCheck } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { formatNaira } from '../lib/currency';
 
 export const Inventory: React.FC = () => {
   const { inventory, addDrug } = useStore();
@@ -76,7 +77,7 @@ export const Inventory: React.FC = () => {
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-lg font-black text-emerald-600">${drug.sellingPrice.toFixed(2)}</p>
+              <p className="text-lg font-black text-emerald-600">{formatNaira(drug.sellingPrice)}</p>
               <button 
                 onClick={() => navigate(`/inventory/${drug.id}`)}
                 className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase underline transition-colors"
@@ -118,14 +119,14 @@ export const Inventory: React.FC = () => {
                    <Input label="Category" required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
                    <Input label="Batch #" required value={formData.batchNumber} onChange={e => setFormData({...formData, batchNumber: e.target.value})} />
                 </div>
-                <Input label="Expiry Date" type="date" required value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
+                <Input className="text-sm" label="Expiry Date" type="date" required value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
                 <div className="grid grid-cols-2 gap-4">
                    <Input label="Stock Qty" type="number" required value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 0})} />
                    <Input label="Low Alert" type="number" required value={formData.lowStockThreshold} onChange={e => setFormData({...formData, lowStockThreshold: parseInt(e.target.value) || 0})} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                   <Input label="Cost ($)" type="number" step="0.01" required value={formData.costPrice} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
-                   <Input label="Selling ($)" type="number" step="0.01" required value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: parseFloat(e.target.value) || 0})} />
+                   <Input label="Cost (NGN)" type="number" step="0.01" required value={formData.costPrice} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
+                   <Input label="Selling (NGN)" type="number" step="0.01" required value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: parseFloat(e.target.value) || 0})} />
                 </div>
                 <Button type="submit" fullWidth className="mt-4"><HiOutlineCheck size={20} /> Save to Inventory</Button>
               </form>
