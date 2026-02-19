@@ -35,11 +35,8 @@ export const Dashboard: React.FC = () => {
         <Card className="bg-emerald-600 border-none text-white relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-1">Revenue Today</p>
-            <h2 className="text-3xl font-black">{formatNaira(totalRevenue)}</h2>
-            <div className="mt-4 flex gap-2">
-               <Badge variant="success" className="bg-white/20 text-white border-none">{formatNaira(totalRevenue)} Generated</Badge>
-            </div>
-            <p className="mt-2 text-xs font-semibold text-emerald-100">{todaysSales.length} transactions today</p>
+            <h2 className="text-3xl text-black">{formatNaira(totalRevenue)}</h2>
+            <p className="mt-2 text-xs font-semibold text-emerald-400">{todaysSales.length} transactions today</p>
           </div>
           <HiOutlineArrowTrendingUp className="absolute -right-6 -bottom-6 w-32 h-32 text-emerald-500/30 rotate-12" />
         </Card>
