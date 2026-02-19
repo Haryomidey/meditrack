@@ -4,6 +4,7 @@ import { Card, Button } from '../components/UI';
 import { useStore } from '../store/useStore';
 import { HiOutlineMagnifyingGlass, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCircle } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatNaira } from '../lib/currency';
 
 export const Sales: React.FC = () => {
   const { inventory, addSale } = useStore();
@@ -65,7 +66,7 @@ export const Sales: React.FC = () => {
             {filteredInventory.slice(0, 5).map((drug) => (
               <button key={drug.id} onClick={() => addToCart(drug)} className="flex-shrink-0 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-left active:scale-95 transition-all w-32">
                 <p className="font-bold text-xs truncate mb-1">{drug.name}</p>
-                <p className="text-emerald-600 font-black text-sm">${drug.sellingPrice.toFixed(2)}</p>
+                <p className="text-emerald-600 font-black text-sm">{formatNaira(drug.sellingPrice)}</p>
                 <p className="text-[9px] text-gray-400 mt-2">{drug.quantity} left</p>
               </button>
             ))}
@@ -76,7 +77,7 @@ export const Sales: React.FC = () => {
           <div className="space-y-3">
             {cart.map((item) => (
               <Card key={item.drugId} className="flex items-center justify-between p-3">
-                <div className="flex-1"><p className="font-bold text-sm text-gray-900">{item.name}</p><p className="text-[10px] text-gray-400">${item.price.toFixed(2)} each</p></div>
+                <div className="flex-1"><p className="font-bold text-sm text-gray-900">{item.name}</p><p className="text-[10px] text-gray-400">{formatNaira(item.price)} each</p></div>
                 <div className="flex items-center gap-3">
                   <button onClick={() => removeFromCart(item.drugId)} className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><HiOutlineMinus size={14} /></button>
                   <span className="font-bold text-sm min-w-[1.5rem] text-center">{item.quantity}</span>
@@ -90,7 +91,7 @@ export const Sales: React.FC = () => {
                     <HiOutlinePlus size={14} />
                   </button>
                 </div>
-                <div className="ml-4 text-right min-w-[4rem]"><p className="font-black text-gray-900">${(item.price * item.quantity).toFixed(2)}</p></div>
+                <div className="ml-4 text-right min-w-[4rem]"><p className="font-black text-gray-900">{formatNaira(item.price * item.quantity)}</p></div>
               </Card>
             ))}
           </div>
@@ -109,7 +110,7 @@ export const Sales: React.FC = () => {
       {cart.length > 0 && (
         <div className="fixed bottom-28 left-5 right-5 z-40">
            <Button disabled={isSubmittingSale} fullWidth className="py-5 rounded-3xl" onClick={handleCheckout}>
-              <div className="flex items-center justify-between w-full"><span className="font-bold">{isSubmittingSale ? 'PROCESSING...' : 'COMPLETE SALE'}</span><span className="text-xl font-black">${total.toFixed(2)}</span></div>
+              <div className="flex items-center justify-between w-full"><span className="font-bold">{isSubmittingSale ? 'PROCESSING...' : 'COMPLETE SALE'}</span><span className="text-xl font-black">{formatNaira(total)}</span></div>
            </Button>
         </div>
       )}

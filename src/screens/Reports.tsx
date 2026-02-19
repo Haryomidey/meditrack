@@ -16,6 +16,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { HiOutlineArrowDownTray, HiOutlineDocumentText, HiOutlineShare } from 'react-icons/hi2';
+import { formatNaira } from '../lib/currency';
 
 // Register ChartJS components
 ChartJS.register(
@@ -141,7 +142,7 @@ export const Reports: React.FC = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-black text-emerald-600 text-sm">${sale.total.toFixed(2)}</p>
+                <p className="font-black text-emerald-600 text-sm">{formatNaira(sale.total)}</p>
               </div>
             </Card>
           ))}
