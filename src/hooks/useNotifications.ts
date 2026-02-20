@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Drug, Prescription } from '../types';
 import {
   processExpiryNotifications,
+  processImmediateLowStockNotifications,
   processInventoryNotifications,
   processRefillNotifications,
   requestNotificationPermission,
@@ -32,4 +33,9 @@ export const useNotifications = (
 
     return () => window.clearInterval(timer);
   }, [inventory, prescriptions, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void processImmediateLowStockNotifications(inventory);
+  }, [inventory, isAuthenticated]);
 };

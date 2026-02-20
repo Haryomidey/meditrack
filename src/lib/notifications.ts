@@ -4,6 +4,7 @@ const LOW_STOCK_PREFIX = 'mt_notify_low_stock';
 const REFILL_PREFIX = 'mt_notify_refill';
 const EXPIRING_PREFIX = 'mt_notify_expiring';
 const EXPIRED_PREFIX = 'mt_notify_expired';
+const LOW_STOCK_IMMEDIATE_PREFIX = 'mt_notify_low_stock_immediate';
 const EXPIRING_SOON_DAYS = 30;
 
 const getTodayKey = (): string => {
@@ -77,6 +78,24 @@ export const processInventoryNotifications = async (inventory: Drug[]): Promise<
   }
 };
 
+export const processImmediateLowStockNotifications = async (inventory: Drug[]): Promise<void> => {
+  for (const drug of inventory) {
+    const isLow = drug.quantity <= drug.lowStockThreshold;
+    if (!isLow) continue;
+
+    // Immediate alert once per unique low-stock quantity change.
+    const key = `${LOW_STOCK_IMMEDIATE_PREFIX}:${drug.id}:${drug.quantity}`;
+    if (hasNotified(key)) continue;
+
+    await sendNotification(
+      'Low Stock Alert',
+      `${drug.name} just dropped to ${drug.quantity} (threshold ${drug.lowStockThreshold}).`,
+    );
+
+    setNotified(key);
+  }
+};
+
 export const processRefillNotifications = async (prescriptions: Prescription[]): Promise<void> => {
   const slot = getHalfHourSlotKey();
   const now = new Date();
@@ -104,7 +123,6 @@ export const processRefillNotifications = async (prescriptions: Prescription[]):
 
 export const processExpiryNotifications = async (inventory: Drug[]): Promise<void> => {
   const slot = getHalfHourSlotKey();
-  const today = getTodayKey();
   const now = new Date();
   const endOfSoonWindow = new Date(now.getTime() + EXPIRING_SOON_DAYS * 24 * 60 * 60 * 1000);
 
@@ -113,15 +131,15 @@ export const processExpiryNotifications = async (inventory: Drug[]): Promise<voi
     if (Number.isNaN(expiryAt.getTime())) continue;
 
     if (expiryAt.getTime() < now.getTime()) {
-      const dailyExpiredKey = `${EXPIRED_PREFIX}:${drug.id}:${today}`;
-      if (hasNotified(dailyExpiredKey)) continue;
+      const expiredKey = `${EXPIRED_PREFIX}:${drug.id}:${slot}`;
+      if (hasNotified(expiredKey)) continue;
 
       await sendNotification(
         'Expired Product Alert',
         `${drug.name} has expired. Remove it from active stock.`,
       );
 
-      setNotified(dailyExpiredKey);
+      setNotified(expiredKey);
       continue;
     }
 
